@@ -1,0 +1,4 @@
+#!/bin/bash
+
+# Función para mostrar mensajes con formato
+echo_formatted "Proceso de instalacion de discos externos"
