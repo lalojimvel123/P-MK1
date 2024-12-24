@@ -1,0 +1,87 @@
+#!/bin/bash
+
+# Función para mostrar mensajes con formato
+echo_formatted() {
+  echo -e "\033[1;34m$1\033[0m"
+}
+
+# Función para actualizar el sistema
+actualizar_sistema() {
+  echo_formatted "[1/6] Actualizando el sistema..."
+  sudo apt update && sudo apt upgrade -y
+}
+
+# Función para instalar paquetes necesarios
+instalar_paquetes() {
+  echo_formatted "[2/6] Instalando paquetes necesarios..."
+  sudo apt install -y ntfs-3g
+}
+
+# Función para detectar discos disponibles
+detectar_discos() {
+  echo_formatted "[3/6] Detectando discos disponibles..."
+  disks=$(lsblk -dpno NAME,SIZE | grep -E "^/dev/sd")
+  if [ -z "$disks" ]; then
+    echo "No se encontraron discos disponibles. Conecta un disco y vuelve a intentarlo."
+    exit 1
+  fi
+
+  echo "Discos disponibles:"
+  echo "$disks"
+
+  echo "Selecciona el disco que deseas montar (por ejemplo, /dev/sda):"
+  read selected_disk
+
+  if [[ ! "$disks" =~ "$selected_disk" ]]; then
+    echo "El disco seleccionado no es válido."
+    exit 1
+  fi
+}
+
+# Función para crear punto de montaje
+crear_punto_montaje() {
+  echo_formatted "[4/6] Creando punto de montaje..."
+  echo "Ingresa el nombre del punto de montaje (por ejemplo, /mnt/external):"
+  read mount_point
+  sudo mkdir -p "$mount_point"
+}
+
+# Función para formatear el disco (opcional)
+formatear_disco() {
+  echo "¿Deseas formatear el disco en NTFS antes de montarlo? Esto borrará todos los datos. (yes/no)"
+  read format_confirmation
+  if [ "$format_confirmation" == "yes" ]; then
+    echo_formatted "Formateando el disco en NTFS..."
+    sudo mkfs.ntfs -f "$selected_disk"
+  fi
+}
+
+# Función para montar el disco
+montar_disco() {
+  echo_formatted "[5/6] Montando el disco..."
+  sudo mount -o defaults "$selected_disk" "$mount_point"
+  echo "El disco ha sido montado en $mount_point."
+}
+
+# Función para configurar montaje automático
+configurar_fstab() {
+  echo "¿Deseas configurar el montaje automático para este disco? (yes/no)"
+  read fstab_confirmation
+  if [ "$fstab_confirmation" == "yes" ]; then
+    uuid=$(blkid -s UUID -o value "$selected_disk")
+    echo "UUID=$uuid $mount_point ntfs defaults 0 0" | sudo tee -a /etc/fstab
+    echo "El montaje automático se ha configurado en /etc/fstab."
+  fi
+}
+
+# Llamada a las funciones principales
+actualizar_sistema
+instalar_paquetes
+detectar_discos
+crear_punto_montaje
+formatear_disco
+montar_disco
+configurar_fstab
+
+# Finalización
+echo_formatted "Proceso completado. Disfruta de tu disco montado en la Raspberry Pi."
