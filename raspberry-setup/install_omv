@@ -5,16 +5,18 @@ echo_formatted() {
   echo -e "\033[1;34m$1\033[0m"
 }
 
-# Actualizar y preparar el sistema para OMV
+# Actualizar y preparar el sistema para OpenMediaVault
 echo_formatted "[1/3] Actualizando y preparando el sistema..."
-sudo apt-get update
-sudo apt-get upgrade -y
+sudo apt-get update && sudo apt-get upgrade -y
+
+# Ejecutar el script de preinstalación
+echo_formatted "[2/3] Ejecutando script de preinstalación para OpenMediaVault..."
 wget -O - https://github.com/OpenMediaVault-Plugin-Developers/installScript/raw/master/preinstall | sudo bash
 
-# Reiniciar el sistema
-echo_formatted "[2/3] Reiniciando el sistema..."
-sudo reboot
+# Ejecutar el script de instalación
+echo_formatted "[3/3] Ejecutando script de instalación de OpenMediaVault..."
+wget -O - https://github.com/OpenMediaVault-Plugin-Developers/installScript/raw/master/install | sudo bash
 
-# Nota al usuario
-echo_formatted "[3/3] Una vez que el sistema haya reiniciado, ejecuta el siguiente comando:"
-echo "wget -O - https://github.com/OpenMediaVault-Plugin-Developers/installScript/raw/master/install | sudo bash"
+# Reiniciar el sistema
+echo_formatted "Proceso completado. El sistema se reiniciará ahora."
+sudo reboot
