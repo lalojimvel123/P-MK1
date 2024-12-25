@@ -1,0 +1,15 @@
+# Opción 3: Instalar OpenMediaVault
+install_openmediavault() {
+  echo_formatted "[1/3] Actualizando el sistema antes de instalar OpenMediaVault..."
+  sudo apt-get update && sudo apt-get upgrade -y
+
+  echo_formatted "[2/3] Ejecutando script de preinstalación de OpenMediaVault..."
+  wget -O - https://github.com/OpenMediaVault-Plugin-Developers/installScript/raw/master/preinstall | sudo bash
+
+  echo_formatted "[3/3] Ejecutando script principal de instalación de OpenMediaVault..."
+  wget -O - https://github.com/OpenMediaVault-Plugin-Developers/installScript/raw/master/install | sudo bash
+
+  echo_formatted "El sistema se reiniciará automáticamente después de completar la instalación. Por favor, vuelve a conectarte tras el reinicio."
+  sudo reboot
+}
+#agradecimientos a https://playonlinew.com/omv7-rpi por proporcionar la informacion para la instalacion
