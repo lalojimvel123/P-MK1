@@ -20,3 +20,5 @@ wget -O - https://github.com/OpenMediaVault-Plugin-Developers/installScript/raw/
 # Reiniciar el sistema
 echo_formatted "Proceso completado. El sistema se reiniciará ahora."
 sudo reboot
+
+#Agradecimientos a https://playonlinew.com/omv7-rpi
