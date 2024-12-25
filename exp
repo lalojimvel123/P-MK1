@@ -1,0 +1,109 @@
+#!/bin/bash
+
+# Función para mostrar mensajes con formato
+echo_formatted() {
+  echo -e "\033[1;34m$1\033[0m"
+}
+
+# Mostrar menú principal
+show_menu() {
+  echo_formatted "\n===== Menú Principal ====="
+  echo "1. Actualizar el sistema"
+  echo "2. Montar disco duro externo"
+  echo "3. Instalar OpenMediaVault"
+  echo "4. Salir"
+  echo "================================"
+  echo "Selecciona una opción:"
+}
+
+# Opción 1: Actualizar el sistema
+update_system() {
+  echo_formatted "[1/5] Actualizando el sistema..."
+  sudo apt update && sudo apt upgrade -y
+}
+
+# Opción 2: Montar disco duro externo
+mount_disk() {
+  echo_formatted "[2/5] Instalando paquetes necesarios..."
+  sudo apt install -y ntfs-3g
+
+  echo_formatted "[3/5] Detectando discos disponibles..."
+  disks=$(lsblk -dpno NAME,SIZE | grep -E "^/dev/sd")
+  if [ -z "$disks" ]; then
+    echo "No se encontraron discos disponibles. Conecta un disco y vuelve a intentarlo."
+    return
+  fi
+
+  echo "Discos disponibles:"
+  echo "$disks"
+
+  echo "Selecciona el disco que deseas montar (por ejemplo, /dev/sda):"
+  read selected_disk
+
+  if [[ ! "$disks" =~ "$selected_disk" ]]; then
+    echo "El disco seleccionado no es válido."
+    return
+  fi
+
+  echo_formatted "[4/5] Creando punto de montaje..."
+  echo "Ingresa el nombre del punto de montaje (por ejemplo, /mnt/external):"
+  read mount_point
+  sudo mkdir -p "$mount_point"
+
+  echo "¿Deseas formatear el disco en NTFS antes de montarlo? Esto borrará todos los datos. (yes/no)"
+  read format_confirmation
+  if [ "$format_confirmation" == "yes" ]; then
+    echo_formatted "Formateando el disco en NTFS..."
+    sudo mkfs.ntfs -f "$selected_disk"
+  fi
+
+  echo_formatted "[5/5] Montando el disco..."
+  sudo mount -o defaults "$selected_disk" "$mount_point"
+  echo "El disco ha sido montado en $mount_point."
+
+  echo "¿Deseas configurar el montaje automático para este disco? (yes/no)"
+  read fstab_confirmation
+  if [ "$fstab_confirmation" == "yes" ]; then
+    uuid=$(blkid -s UUID -o value "$selected_disk")
+    echo "UUID=$uuid $mount_point ntfs defaults 0 0" | sudo tee -a /etc/fstab
+    echo "El montaje automático se ha configurado en /etc/fstab."
+  fi
+
+  echo_formatted "Proceso completado."
+}
+
+# Opción 3: Instalar OpenMediaVault
+install_openmediavault() {
+  echo_formatted "[1/2] Actualizando el sistema antes de instalar OpenMediaVault..."
+  sudo apt-get update && sudo apt-get upgrade -y
+
+  echo_formatted "[2/2] Instalando OpenMediaVault..."
+  wget -O - https://github.com/OpenMediaVault-Plugin-Developers/installScript/raw/master/preinstall | sudo bash
+  sudo reboot
+
+  echo_formatted "El sistema se reiniciará automáticamente. Después del reinicio, vuelve a conectarte para completar la configuración."
+}
+
+# Ciclo principal del menú
+while true; do
+  show_menu
+  read option
+  case $option in
+    1)
+      update_system
+      ;;
+    2)
+      mount_disk
+      ;;
+    3)
+      install_openmediavault
+      ;;
+    4)
+      echo_formatted "Saliendo del programa."
+      exit 0
+      ;;
+    *)
+      echo "Opción no válida. Por favor, intenta de nuevo."
+      ;;
+  esac
+done
